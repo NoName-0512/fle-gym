@@ -1,0 +1,71 @@
+FLE-Gym Personal Non-Commercial License — Version 1.0
+
+Copyright (c) 2026 Duran Reddy. All rights reserved.
+
+1. Scope
+
+This license applies to the original FLE-Gym code and documentation that
+Duran Reddy owns and has the right to license (the "Licensed Material"). It
+does not replace or restrict the separate licenses governing third-party
+material, including the Factorio Learning Environment (FLE), and does not
+license the Factorio game, its software, or its assets.
+
+2. Permission for Non-Commercial Use
+
+Subject to the conditions below, the copyright holder grants each recipient
+of the Licensed Material a worldwide, royalty-free, non-exclusive permission
+to use, copy, study, modify, and redistribute the Licensed Material and
+modified versions, solely for Non-Commercial Purposes.
+
+"Non-Commercial Purposes" means purposes not primarily intended for or
+directed toward commercial advantage or monetary compensation. Use in
+commercial products or services, sale of the Licensed Material, paid
+consulting or support using the Licensed Material, hosting it as a paid
+service, and use in a business's commercial operations are not permitted
+without separate written permission from the copyright holder.
+
+3. Conditions on Redistribution
+
+Any redistribution of the Licensed Material or a modified version must:
+
+(a) retain this copyright notice and the complete text of this license;
+(b) retain applicable third-party copyright and license notices;
+(c) clearly identify modifications made by the redistributor; and
+(d) provide the Licensed Material and modified versions only under terms
+    that preserve the Non-Commercial Use restriction for the original
+    Licensed Material.
+
+The redistributor retains any copyright that applicable law grants in their
+own original modifications. This license does not transfer ownership of the
+original Licensed Material.
+
+4. Rights Reserved; Commercial Permissions
+
+All rights not expressly granted are reserved by the copyright holder.
+Commercial use (including commercial distribution, sublicensing for
+commercial purposes, or other commercial exploitation) of the Licensed
+Material requires separate, prior written authorization from the copyright
+holder. The copyright holder may grant different licenses,
+including commercial licenses, at their discretion.
+
+5. No Endorsement or Trademark License
+
+This license does not permit the use of the copyright holder's name,
+trademarks, or affiliations to imply endorsement, nor does it grant rights
+to third-party names or marks.
+
+6. Disclaimer of Warranty and Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED MATERIAL IS
+PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE
+COPYRIGHT HOLDER SHALL NOT BE LIABLE FOR DAMAGES ARISING FROM ITS USE.
+
+7. Third-Party Material
+
+FLE is distributed under its own MIT license and copyright notices, which
+are reproduced in THIRD_PARTY_NOTICES.md. The Non-Commercial restriction
+above is intended to apply only to the Licensed Material, not to upstream
+FLE code to which FLE's MIT permissions separately apply. Factorio game
+code and assets are not included in this grant.
