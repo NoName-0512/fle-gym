@@ -1,6 +1,6 @@
 # FLE-Gym — standalone Gymnasium wrapper
 
-This release contains the **Gym-facing FLE/Factorio environment only**. It is not the PPO/SAC/MAP-Elites training system, and does not install, launch, monitor or stop the Factorio/FLE cluster for you.
+This release contains the **Gym-facing FLE/Factorio environment only**.
 
 ## Prerequisites
 
