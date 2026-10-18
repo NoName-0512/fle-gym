@@ -40,7 +40,7 @@ from factorio_openended_env_machine import (
     Runtime_TRACKED_ITEMS,
 )
 from factorio_openended_env_craft import FactorioOpenEndedEnvCraft
-from factorio_openended_env_research_yqeibtv import CRAFT_BY_ACTION, Runtime_LIVE_ENTITY_NAMES
+from factorio_openended_env_extended import CRAFT_BY_ACTION, Runtime_LIVE_ENTITY_NAMES
 from factorio_transition_env import ActionSpec, json_safe, safe_float, spaces
 
 
@@ -438,13 +438,13 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
             "return nil,probes,last_reason end; "
         )
 
-    def _state_command_yqeibtv(self) -> str:
+    def _state_command_extended(self) -> str:
         """Align route selection and add live lab/resource signals.
 
         ``entity_status.working`` is false for a correctly powered but empty
         lab, which made runtime mistake a ready lab for an unpowered one.
         """
-        command = super()._state_command_yqeibtv()
+        command = super()._state_command_extended()
         first_target = (
             "local target=nil; for _,n in ipairs(names) do for _,e in ipairs("
             "s.find_entities_filtered{name=n,force=f}) do local ok,c=pcall(function() "
@@ -642,13 +642,13 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
         result.update(setup)
         if setup.get("ok") != "1":
             return result
-        power = self._runtime_connect_power_yqeibtv(("lab",))
+        power = self._runtime_connect_power_extended(("lab",))
         result["power_ok"] = power.get("ok", "0")
         if power.get("ok") != "1":
             return result
         self._collect_feasibility_state(force=True)
         self._collect_infrastructure_state(force=True)
-        feed = self._runtime_feed_labs_yqeibtv()
+        feed = self._runtime_feed_labs_extended()
         result["feed_ok"] = feed.get("ok", "0")
         result["queued_research"] = feed.get("queued_research", "")
         result["queue_ok"] = feed.get("queue_ok", "0")
@@ -835,7 +835,7 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
         self._runtime_lab_feed_feasibility = dict(values)
         return dict(values)
 
-    def _runtime_feed_labs_yqeibtv(self) -> Dict[str, Any]:
+    def _runtime_feed_labs_extended(self) -> Dict[str, Any]:
         """Feed science with an exact runtime source+destination race check.
 
         A runtime long run showed that ``no-science`` may mean either (a) no
@@ -846,7 +846,7 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
         """
         for attempt in (1, 2):
             try:
-                result = dict(super()._runtime_feed_labs_yqeibtv())
+                result = dict(super()._runtime_feed_labs_extended())
             except RuntimeError as exc:
                 if "no-science" not in str(exc):
                     raise
@@ -996,9 +996,9 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
 
     def _runtime_connect_electric_drills_power(self) -> Dict[str, Any]:
         """Let runtime dispatch the runtime transactional drill planner exactly once."""
-        return self._runtime_connect_power_yqeibtv(("electric-mining-drill",))
+        return self._runtime_connect_power_extended(("electric-mining-drill",))
 
-    def _dispatch_runtime_yqeibtv(self, action_name: str) -> Optional[Dict[str, Any]]:
+    def _dispatch_runtime_extended(self, action_name: str) -> Optional[Dict[str, Any]]:
         if action_name == "bootstrap_lab_research":
             return self._runtime_bootstrap_lab_research_research()
         if action_name == "collect_engine_units":
@@ -1025,7 +1025,7 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
             legacy_base_targets = {"automation", "logistics", "steel-processing"}
             if target in Runtime_RESEARCH_TARGETS and target not in legacy_base_targets:
                 return self._queue_research_runtime(target)
-        return super()._dispatch_runtime_yqeibtv(action_name)
+        return super()._dispatch_runtime_extended(action_name)
 
     # ------------------------------------------------------------------
     # Laboratory ingredient potential
@@ -1191,7 +1191,7 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
         result["runtime_reuse_enabled"] = "1"
         return result
 
-    def _runtime_connect_power_yqeibtv(
+    def _runtime_connect_power_extended(
         self, target_names: Optional[Sequence[str]] = None
     ) -> Dict[str, Any]:
         names = tuple(

@@ -37,7 +37,7 @@ from factorio_openended_env_machine import (
     Runtime_RESEARCH_TARGETS,
     Runtime_TRACKED_ITEMS,
 )
-from factorio_openended_env_research_yqeibtv import CRAFT_BY_ACTION, Runtime_LIVE_ENTITY_NAMES
+from factorio_openended_env_extended import CRAFT_BY_ACTION, Runtime_LIVE_ENTITY_NAMES
 from factorio_transition_env import json_safe, safe_float, spaces
 
 
@@ -290,7 +290,7 @@ class FactorioOpenEndedEnvCraft(FactorioOpenEndedEnvMachine):
         result["runtime_reuse_enabled"] = "1"
         return result
 
-    def _runtime_connect_power_yqeibtv(
+    def _runtime_connect_power_extended(
         self, target_names: Optional[Sequence[str]] = None
     ) -> Dict[str, Any]:
         names = tuple(

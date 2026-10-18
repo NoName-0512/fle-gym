@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fle-gym"
-version = "1.0.0rc5"
+version = "1.0.0rc6"
 description = "Gymnasium-compatible wrapper for the Factorio Learning Environment"
 readme = "README.md"
 license = "LicenseRef-FLE-Gym-NonCommercial-1.0"

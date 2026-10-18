@@ -1,10 +1,12 @@
-# FLE-Gym action registry (release candidate)
+# Action catalogue and action masking
 
-These action IDs, names, categories, descriptions and declared prerequisites were captured from the installed public `FactorioOpenPlayEnv.action_registry` on 18 October 2026.
+This catalogue records action IDs, names, categories, descriptions and declared prerequisites from the validated rc5 `FactorioOpenPlayEnv.action_registry` snapshot (18 October 2026). The rc6 internal-module rename is intended to preserve the catalogue unchanged; verify it using the packaged runtime after applying the patch.
 
 **Contract:** `Discrete(124)`; indices 0–123. An action's `required_items` and `required_entities` reflect metadata, **not a complete feasibility guarantee**. Check `env.action_masks()` each step, and verify changes in Factorio state after execution.
 
 **Important:** Several action `code` fields contain `runtime_*_requested` event markers. These are requests handled by the underlying runtime, not proof of execution or no-op instructions. This table documents declared intent; physical effects require live integration tests.
+
+The 124 IDs are policy-compatible across Lab Play and Open Play; action feasibility is **state dependent**, and the server must be running the selected scenario. Both the action mask and execution can reject actions because of game conditions, so check `info` after each transition.
 
 Category breakdown: automation=10, craft=35, extract=2, harvest=4, insert=4, logistics=4, noop=1, place=2, power=11, research=36, transfer=13, wait=2.
 
@@ -147,3 +149,16 @@ try:
 finally:
     env.close()
 ```
+
+## Programmatic introspection
+
+```python
+from fle_gym import action_names, actions
+
+assert len(action_names()) == 124
+assert len(actions()) == 124
+for i, spec in enumerate(actions()):
+    assert action_names()[i] == spec["name"]
+```
+
+With a running server, `env.action_masks()` returns a Boolean `(124,)` array. `env.action_index(name)` and `env.action_name(index)` translate between names and IDs. This table describes *declared metadata*; masks and effects must be evaluated in live Factorio states.

@@ -1,19 +1,43 @@
-# Lab Play and Open Play: current public API
+# Lab Play and Open Play
 
-Both scenario classes are exposed in `fle_gym.api`, but the `scenario` value is **metadata identifying the expected server scenario**. This wrapper connects over RCON to a Factorio server **already started** with that scenario. It does not start/change a Docker container's scenario.
+FLE-Gym supports two named configurations of the **same** 124-action, 266-observation Gymnasium interface. The scenario is chosen when the **Factorio/FLE server** is started. The Python wrapper records which scenario is expected; it does not start a container, load a map, or verify that the server was launched with a matching scenario.
 
-```python
-from fle_gym import FactorioLabEnv, FactorioOpenPlayEnv
+| Environment | Wrapper class | `make_env` scenario | Expected FLE server scenario |
+|---|---|---|---|
+| Lab Play | `FactorioLabEnv` | `default_lab_scenario` | `default_lab_scenario` |
+| Open Play | `FactorioOpenPlayEnv` | `open_world` | `open_world` |
 
-# Connect each class to a server already configured for its corresponding scenario.
-lab = FactorioLabEnv(rcon_port=27000)
-# open_play = FactorioOpenPlayEnv(rcon_port=27001)  # only if such a server actually exists
+## Start the matching server
+
+If you use the FLE CLI and Docker integration, examples are:
+
+```bash
+fle cluster start -n 1 -s default_lab_scenario
+# Alternatively, for a separate testing session:
+fle cluster start -n 1 -s open_world
 ```
 
-The current CLI accepts `fle cluster start -n 1 -s default_lab_scenario` or `fle cluster start -n 1 -s open_world`, but starting it again may **recreate/replace the existing cluster**. In the user's tests, both scenarios were tested sequentially on the same host RCON port `27000` and container `cluster-factorio_0-1`.
+**Do not run these consecutively against a running world you want to keep.** Starting a cluster may replace its existing container/world. In the documented validation the scenarios were used **sequentially** on a single container with host RCON port `27000`; this does not imply both scenarios are simultaneously accessible on different ports.
 
-**Caution:** `FactorioEnv.reset()` defaults to `hard_reset=True`, which clears/reinitializes the connected factory. Treat the connected scenario as a disposable research environment. Final `save_world()` normally scrubs Lua storage and should be used near the end of a run.
+## Construct an environment
 
-**Known API limitation:** `make_env(scenario=...)` silently selects the Lab class for any value other than the exact string `open_world`; this should reject unknown scenario names before public release. Passing `scenario='open_world'` to the Lab class (or vice versa) is currently possible and does not verify the underlying server.
+```python
+from fle_gym import FactorioLabEnv, FactorioOpenPlayEnv, make_env
 
-**Verified scenario tests:** Lab Play 4096 steps + save export + manual Factorio load; Open Play 4096 steps + save export + successful Factorio load shown by user. These are **protocol/integration tests with a random policy**, not evidence of competent trained-agent factory performance.
+lab = FactorioLabEnv(rcon_port=27000)  # requires Lab Play server
+# open_play = FactorioOpenPlayEnv(rcon_port=27000)  # requires Open Play server
+# alternate = make_env(scenario="open_world", rcon_port=27000)
+```
+
+`make_env` rejects unrecognized scenario identifiers with `ValueError` *before* attempting an RCON connection. A mismatched **known** scenario and server are not automatically detected, so operators must check the actual server configuration.
+
+## Reset, progression and time limits
+
+- `env.reset()` uses `options={"hard_reset": True}` unless explicitly overridden; this reinitializes the research world. Do not use it to connect non-destructively to a valuable save.
+- The default horizon is 4,096 environment decisions. Reaching it yields `truncated=True`; this represents a time limit, **not** successful factory construction or research completion.
+- The `scenario` label does not change the action/observation indexing. Observed content and feasible actions reflect the live map and factory.
+- Save a world at the end of a disposable run with `save_world`, before closing the environment. Default Lua-storage scrubbing may disrupt continued play.
+
+## Validation status
+
+Both Lab Play and Open Play completed 4,096-step random-valid-action integration runs, produced native save exports, and were loaded in desktop Factorio. These tests establish basic operation and save interoperability, **not agent skill** or complete research-tree automation. See [Validation](VALIDATION.md).

@@ -21,8 +21,8 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
 
-from factorio_openended_env_research_ajweuzp import (
-    FactorioOpenEndedEnvAjweuzp,
+from factorio_openended_env_feasibility import (
+    FactorioOpenEndedEnvFeasibility,
     LAB_RESEARCH_TARGETS,
     MACHINE_OUTPUT_WEIGHTS,
     MANUAL_CRAFT_OUTPUTS,
@@ -91,7 +91,7 @@ MACHINE_SOURCE_KIND: Dict[str, str] = {
 }
 
 
-class FactorioOpenEndedEnvRecipe(FactorioOpenEndedEnvAjweuzp):
+class FactorioOpenEndedEnvRecipe(FactorioOpenEndedEnvFeasibility):
     """Shared runtime environment for PPO, discrete SAC, and MAP-Elites."""
 
     def __init__(

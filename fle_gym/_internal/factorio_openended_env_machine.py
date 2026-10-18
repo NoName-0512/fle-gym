@@ -25,7 +25,7 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 import numpy as np
 
 from factorio_openended_env_recipe import PROGRESSION_MILESTONE_REWARDS
-from factorio_openended_env_research_yqeibtv import (
+from factorio_openended_env_extended import (
     CRAFT_BY_ACTION,
     CraftSpec,
     Runtime_ACTIONS,
@@ -34,10 +34,10 @@ from factorio_openended_env_research_yqeibtv import (
     Runtime_PROGRESSION_REWARDS,
     Runtime_RESEARCH_TARGETS,
     Runtime_TRACKED_ITEMS,
-    FactorioOpenEndedEnvYqeibtv,
+    FactorioOpenEndedEnvExtended,
 )
 from factorio_transition_env import ActionSpec, json_safe, safe_float, spaces
-from factorio_openended_env_research_ajweuzp import MANUAL_CRAFT_OUTPUTS
+from factorio_openended_env_feasibility import MANUAL_CRAFT_OUTPUTS
 
 
 Runtime_VERSION = "18.0"
@@ -173,7 +173,7 @@ LEGACY_INCREMENTAL_CRAFTS: Mapping[str, str] = {
 }
 
 
-class FactorioOpenEndedEnvMachine(FactorioOpenEndedEnvYqeibtv):
+class FactorioOpenEndedEnvMachine(FactorioOpenEndedEnvExtended):
     """runtime shared environment used unchanged by PPO, SAC, and MAP-Elites."""
 
     def __init__(
@@ -373,7 +373,7 @@ class FactorioOpenEndedEnvMachine(FactorioOpenEndedEnvYqeibtv):
     # ------------------------------------------------------------------
     # Zero-count-safe power routing
     # ------------------------------------------------------------------
-    def _runtime_connect_power_yqeibtv(
+    def _runtime_connect_power_extended(
         self, target_names: Optional[Sequence[str]] = None
     ) -> Dict[str, Any]:
         marker = "__FLE_RL_RUNTIME_runtime___POWER"

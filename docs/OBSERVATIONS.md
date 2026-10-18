@@ -1,6 +1,6 @@
-# FLE-Gym observation schema (release candidate)
+# Observation vector and feature schema
 
-This document records the exact ordered labels from the installed public `FactorioOpenPlayEnv.observation_schema` on 18 October 2026.
+This document records the ordered labels from the validated rc5 `FactorioOpenPlayEnv.observation_schema` snapshot (18 October 2026). The rc6 rename is intended to preserve this order; confirm equivalence with the tests and runtime before release.
 
 **Contract:** `Box` observation with 266 positions (0–265). These are schema labels, **not yet a complete scientific specification**: numerical transformations, units, bounds, clipping, scaling, and update frequency must be checked against the source before publication.
 
@@ -288,3 +288,22 @@ try:
 finally:
     env.close()
 ```
+
+## Inspecting the schema from Python
+
+With a running Factorio/FLE server configured for the scenario:
+
+```python
+from fle_gym import FactorioOpenPlayEnv
+
+env = FactorioOpenPlayEnv(rcon_port=27000)
+try:
+    assert env.observation_space.shape == (266,)
+    assert len(env.observation_schema) == 266
+    for index, label in enumerate(env.observation_schema):
+        print(index, label)
+finally:
+    env.close()
+```
+
+**Interpretation caveat:** feature names are a stable ordering reference, not a guarantee of physical units. Inventory and other counts may be logarithmically transformed, and some telemetry is sampled at configurable intervals. See [Rewards](REWARDS.md) and the source implementation before comparing raw game metrics with observation values.

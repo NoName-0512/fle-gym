@@ -1,77 +1,134 @@
-# FLE-Gym — standalone Gymnasium wrapper
+# FLE-Gym
 
-This release contains the **Gym-facing FLE/Factorio environment only**. It is not the PPO/SAC/MAP-Elites training system, and does not install, launch, monitor or stop the Factorio/FLE cluster for you.
+**A Gymnasium-compatible interface for reinforcement learning in Factorio, built on the Factorio Learning Environment (FLE).**
 
-## Prerequisites
+FLE-Gym exposes a stable, discrete decision interface so researchers can connect their own reinforcement-learning or quality-diversity agents to an existing Factorio server. The package provides action masks, numeric observations, reward diagnostics, scenario-specific environment classes, and native Factorio save export. It does **not** bundle a trained agent, train PPO/SAC/MAP-Elites, or manage the Factorio cluster.
 
-- A Factorio game server must already be running with an available TCP RCON port (e.g. `27000`).
-- Docker/Factorio runtime setup is separate from this Python package and is **not** bundled.
-- Python dependencies install automatically; validated with FLE 0.4.3 and A2A SDK 0.3.25 in Python 3.12.
+**Release status:** `1.0.0rc6` is a release candidate, not the final `1.0.0` release. After its internal naming refactor, rc6 passed 13 offline regression tests, built and installed successfully from its wheel, and completed a four-action live Open Play construction/fueling telemetry check. The controlled rc6 production probe was partial (no iron output). Lab Play rc6 integration, GitHub CI, package/provenance review and remaining release gates are still pending; see [Validation](docs/VALIDATION.md).
 
-## Install
+## At a glance
+
+| Property | Current interface |
+|---|---|
+| Standard | Gymnasium-style `reset` and five-value `step` |
+| Action space | `Discrete(124)` high-level actions |
+| Observation space | Numeric `Box`, shape `(266,)` |
+| Action feasibility | Boolean mask `(124,)` via `env.action_masks()` |
+| Scenarios | Lab Play (`default_lab_scenario`), Open Play (`open_world`) |
+| Default time limit | 4,096 environment decisions (`truncated=True`) |
+| Runtime | Existing Factorio/FLE instance over TCP RCON |
+| Python | Tested in Python 3.12; metadata allows Python >=3.10 |
+| Primary upstream dependency | `factorio-learning-environment==0.4.3` |
+
+Action IDs and observation indices are stable across the two wrapper classes. Feasibility and physical effects depend on the underlying game state; choosing an unmasked action does not guarantee an item is produced.
+
+## Requirements and installation
+
+You need Python, a working Factorio/FLE installation, and access to a running Factorio instance's **host TCP RCON port**. The wrapper does not install the Factorio game, redistribute its assets, launch Docker containers, or change a server's scenario.
+
+From a checked-out repository:
 
 ```bash
-python -m pip install .
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e .
 python scripts/check_install.py
 ```
 
-This package declares the compatible FLE Python runtime (`factorio-learning-environment==0.4.3`) and A2A SDK (`a2a-sdk==0.3.25`) as installation dependencies. It does not bundle Factorio, Docker, or optional FLE vision sprites. If you need visual rendering, run `fle sprites` or set `FLE_SPRITES_DIR`.
+The package pins FLE `0.4.3` and A2A SDK `0.3.25` in its dependency metadata. For container startup, scenario selection, Windows/WSL notes, and offline installation checks, see [Installation](docs/INSTALLATION.md).
 
-## Use your own agent
+## Quick start: bring your own policy
+
+Start an existing FLE/Factorio server in **Lab Play**, then use its exposed RCON port (typically `27000` in a single-instance local setup):
 
 ```python
+import numpy as np
 from fle_gym import FactorioLabEnv
 
-env = FactorioLabEnv(rcon_port=27000, seed=42, run_dir="runs/my_agent")
-obs, info = env.reset()
+rng = np.random.default_rng(42)
+env = FactorioLabEnv(rcon_port=27000, seed=42, run_dir="runs/quickstart")
+
 try:
-    while True:
-        mask = env.action_masks()  # Boolean feasibility mask (124,)
-        action = my_agent.act(obs, mask)
+    obs, info = env.reset(seed=42)  # resets the connected research world
+    for _ in range(10):
+        valid = np.flatnonzero(env.action_masks())
+        if not len(valid):
+            raise RuntimeError("No feasible actions")
+        action = int(rng.choice(valid))  # substitute your own agent here
         obs, reward, terminated, truncated, info = env.step(action)
+        print(env.action_name(action), reward, terminated, truncated)
         if terminated or truncated:
-            obs, info = env.reset()
+            break
 finally:
     env.close()
 ```
 
-You can run any algorithm and collect arbitrary metrics yourself from `(obs, reward, terminated, truncated, info)`.
+This example checks the interface, not learned factory-building performance. `env.reset()` defaults to `hard_reset=True` and **reinitializes the connected world**. Run it on an expendable test server, not a world you intend to preserve.
 
-## Live deployment smoke test
+For Open Play, start the *server* with `open_world` and use `FactorioOpenPlayEnv` (or `make_env(scenario="open_world", ...)`). Changing Python classes alone does **not** switch the underlying server scenario.
 
-Ensure the existing FLE instance is already running, then:
+## Validate the installation
+
+Offline checks (do not require a Factorio server):
+
+```bash
+python -m unittest discover -s tests -v
+python -m compileall -q fle_gym tests
+python -m pip check
+```
+
+Once an expendable Lab Play instance is running:
 
 ```bash
 python scripts/smoke_test.py --rcon-port 27000 --steps 10 --seed 42
 ```
 
-Expected API: `Discrete(124)`, observation shape `(266,)`, Boolean `(124,)` action mask, and Gymnasium five-element `step` return. The smoke test checks actual calls; it does not train an agent.
+The smoke test calls `reset` and therefore resets the connected research world. A 4,096-step validation can be run with `scripts/validate_scenarios.py` after configuring the corresponding server. See [Validation](docs/VALIDATION.md) for what has actually been tested, including the limits of those claims.
 
-**Important:** The release builder renames historical implementation modules, classes and imports to version-neutral names. Original source files remain untouched. This source transformation requires independent live validation: static analysis cannot guarantee all dynamic imports or string lookups are preserved.
+## Export a playable Factorio save
 
-## Save the actual Factorio game
-
-After the final action, **before** closing or resetting the environment:
+While `env` is still open, after its **last** action:
 
 ```python
-save_path = env.save_world(
-    "my_factory", "world_saves/my_factory.zip", rcon_port=27000
+path = env.save_world(
+    "my_factory",
+    "world_saves/my_factory.zip",
+    rcon_port=27000,
 )
-print("Verified Factorio save:", save_path)
+print(path)
 ```
 
-This requests a server-side save via Factorio RCON, copies the resulting `.zip` from its Docker container, and verifies archive integrity. The host must have access to the `docker` CLI. If the running container cannot be uniquely identified from the published RCON port, supply `container="container_name"`.
+This uses Factorio's server save command, copies the ZIP from the selected Docker container, and checks archive integrity. The host requires Docker CLI access; set `container="your_container_name"` if port-based container discovery is ambiguous. Existing output ZIPs are not overwritten.
 
-**State impact:** By default this uses the original project save workaround: recursively removing unserialisable Lua functions from `storage` before requesting the save. That may disrupt further play or training in the same live world. Save only when the episode/run is complete, or set `scrub_storage=False` if you know your scenario does not need that workaround. Saving an archive does not automatically stop the container or delete the world.
+**Important:** The default `scrub_storage=True` removes unserializable Lua functions from Factorio `storage` before saving. This can affect further play in the same world. Save only at the end of the run, or explicitly use `scrub_storage=False` if your scenario can save safely without that workaround. Saving does not stop or destroy containers.
 
-## Experiment separation
+## Reference documentation
 
-Intentionally absent: `experiments/`, 5-replica scheduling, PPO/SAC/MAP-Elites training code not needed by the wrapper, monitoring dashboards, resume helpers, checkpoint orchestration, and dissertation result exporters. Lightweight in-memory episode bookkeeping necessary for observations, action validation or reward computation remains inside the wrapper. Some wrapper-native `info` telemetry may also remain because deleting it could alter the validated behaviour.
+| Guide | Description |
+|---|---|
+| [Installation](docs/INSTALLATION.md) | Setup, dependencies, server connection and smoke test |
+| [API](docs/API.md) | Environment constructors, resets, actions, metrics and save API |
+| [Scenarios](docs/SCENARIOS.md) | Lab Play vs Open Play and scenario ownership |
+| [Actions](docs/ACTIONS.md) | Ordered 124-action catalogue and action masking |
+| [Observations](docs/OBSERVATIONS.md) | Ordered 266-feature schema and normalization caveats |
+| [Rewards](docs/REWARDS.md) | Reward shaping, telemetry and interpretability limits |
+| [Validation](docs/VALIDATION.md) | Tests completed, evidence and remaining test coverage |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Common RCON, Docker, reset and packaging failures |
+| [Development](docs/DEVELOPMENT.md) | Contributor checks and internal compatibility rules |
+| [Release checklist](docs/RELEASE_CHECKLIST.md) | Gates before a public, final release |
+| [Change log](CHANGELOG.md) | Notable package changes |
 
-## License and attribution
+## Boundaries and reproducibility
 
-FLE-Gym's original contributions are distributed under the [FLE-Gym Personal Non-Commercial License](LICENSE), copyright (c) 2026 Duran Reddy. Personal, educational, and non-commercial research use, modification and redistribution are permitted under its conditions; **commercial use requires prior written permission**. The project is **source-available, not OSI-approved open source**.
+The package intentionally excludes training loops, saved policies, five-replica scheduling, experiment dashboards, resumption/orchestration infrastructure, dissertation results and Factorio game files. High-level actions perform deterministic planning and game API operations, but **the policy decides which action to take**. The wrapper is not a vision-learning environment: its current agent observation is a 266-element numeric vector, not screenshots.
 
-The independent [Factorio Learning Environment (FLE)](https://github.com/JackHopkins/factorio-learning-environment) remains MIT-licensed. FLE's copyright and MIT terms are preserved in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The FLE-Gym restrictions do not override rights granted under upstream FLE's MIT license. Copyright and licensing claims are limited to material the named contributor has the legal right to license; verify any institutional or other third-party IP obligations before public release.
+For comparable research, report the package commit/tag, FLE/Factorio versions, server scenario, action catalogue, observation schema, reset/seed behavior, reward overrides, time limit, and agent action-masking method. The reward diagnostics should be interpreted with the cautions in [Rewards](docs/REWARDS.md).
 
-FLE-Gym does **not** include or license Factorio game executables, code, artwork or other proprietary assets. Factorio must be acquired and operated under its own terms. The FLE-Gym maintainers are not affiliated with or endorsed by the Factorio developers or FLE's contributors.
+## License, upstream attribution and provenance
+
+Copyright (c) 2026 Duran Reddy for original FLE-Gym contributions that the author has the right to license. Those contributions are offered under the [FLE-Gym Personal Non-Commercial License](LICENSE). **Commercial use requires prior written permission.** This is a source-available, non-commercial project—not an OSI-approved open-source license.
+
+FLE-Gym depends on the separately maintained [Factorio Learning Environment](https://github.com/JackHopkins/factorio-learning-environment) (FLE); FLE's MIT license and its contributors' copyright remain applicable to FLE material. See [Third-party notices](THIRD_PARTY_NOTICES.md). FLE-Gym's non-commercial terms **do not restrict the upstream MIT rights**. Source provenance, including any third-party or institutional ownership obligations, must be assessed before a public release; see [Release checklist](docs/RELEASE_CHECKLIST.md).
+
+Factorio game executables, game code and assets are not distributed or licensed by this project. Factorio is developed by Wube Software; this project is not affiliated with or endorsed by the Factorio developers or FLE contributors.
