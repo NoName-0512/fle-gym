@@ -17,7 +17,7 @@ fle cluster start -n 1 -s default_lab_scenario
 fle cluster start -n 1 -s open_world
 ```
 
-**Do not run these consecutively against a running world you want to keep.** Starting a cluster may replace its existing container/world. In the documented validation the scenarios were used **sequentially** on a single container with host RCON port `27000`; this does not imply both scenarios are simultaneously accessible on different ports.
+**Do not run these consecutively against a running world you want to keep.** Starting a cluster may replace its existing container/world. Earlier validation used the scenarios **sequentially** on port `27000`. Later rc6 validation ran them concurrently using independent containers: Open Play on `27000` and Lab Play on `27001`. The Lab container was created separately, not by increasing the FLE CLI cluster size.
 
 ## Construct an environment
 

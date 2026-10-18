@@ -2,7 +2,7 @@
 
 All dates and status claims below distinguish completed rc5 validation from changes being prepared for rc6.
 
-## [1.0.0rc6] — release preparation (partial live verification complete)
+## [1.0.0rc6] — release preparation (Lab/Open Play integration verified)
 
 ### Changed
 
@@ -17,7 +17,10 @@ All dates and status claims below distinguish completed rc5 validation from chan
 - rc6 wheel and source distribution built; installed wheel imported successfully from outside the source tree.
 - Live disposable **Open Play** test passed observation/action dimensions, furnace/drill placement and five-coal insertion for both machines; the extended and inventory runtime telemetry keys returned success.
 - The rc6 controlled production probe remained **partial**: no iron output was demonstrated because harvesting/transfer actions were masked.
-- A separate rc6 **Lab Play** integration check, CI and final provenance review remain outstanding.
+- Lab Play passed a 20-transition live smoke test, native save export, ZIP integrity checking and researcher-confirmed desktop Factorio loading.
+- GitHub Actions passed on commit `7d41a4b`; source/wheel contents checks and installation in a fresh virtual environment passed.
+- Ordered compatibility checks confirmed all 124 action names and 266 observation labels remained unchanged from rc5.
+- Final source provenance, ownership and licensing review remains outstanding.
 - No external API compatibility break is intended. Private Python implementation identifiers are **not** a stable supported API.
 
 ## [1.0.0rc5] — 18 October 2026

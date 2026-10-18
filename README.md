@@ -4,7 +4,7 @@
 
 FLE-Gym exposes a stable, discrete decision interface so researchers can connect their own reinforcement-learning or quality-diversity agents to an existing Factorio server. The package provides action masks, numeric observations, reward diagnostics, scenario-specific environment classes, and native Factorio save export. It does **not** bundle a trained agent, train PPO/SAC/MAP-Elites, or manage the Factorio cluster.
 
-**Release status:** `1.0.0rc6` is a release candidate, not the final `1.0.0` release. After its internal naming refactor, rc6 passed 13 offline regression tests, built and installed successfully from its wheel, and completed a four-action live Open Play construction/fueling telemetry check. The controlled rc6 production probe was partial (no iron output). Lab Play rc6 integration, GitHub CI, package/provenance review and remaining release gates are still pending; see [Validation](docs/VALIDATION.md).
+**Release status:** `1.0.0rc6` is a release candidate, not the final `1.0.0` release. After its internal naming refactor, rc6 passed 13 offline regression tests, built and installed successfully from its wheel, and completed a four-action live Open Play construction/fueling telemetry check. The controlled rc6 production probe was partial (no iron output). Lab Play integration, GitHub CI, clean installation and package-content checks have passed; final provenance/ownership review and remaining release gates are still pending; see [Validation](docs/VALIDATION.md).
 
 ## At a glance
 

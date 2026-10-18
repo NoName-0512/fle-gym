@@ -50,29 +50,28 @@ contract change was established by these tests.
 
 These checks establish **rc6 Open Play construction/telemetry integration**.
 They do **not** establish rc6 iron-plate production, full factory automation,
-Lab Play integration, 4,096-step horizon behavior, or post-refactor native save
-export. The prior rc5 iron-plate production and Lab save tests remain historical
+or 4,096-step horizon behavior. Separate rc6 Lab Play and save-export checks
+are documented below. The prior rc5 iron-plate production and Lab save tests remain historical
 evidence for the validated earlier implementation, not independent rc6 results.
 
-## rc6 refactor: remaining release gates
+## Additional rc6 verification — 18 October 2026
 
-The internal renaming has passed offline, packaging, installed-wheel and a short
-live Open Play action/telemetry test. The following remain before the final
-release is claimed to be fully validated:
+- Ordered rc5-to-rc6 compatibility check: PASS for all 124 action names and 266 observation labels; dimensions and documentation links also passed. This does not establish numerical equivalence of all observations or rewards.
+- Dedicated Lab Play server `fle-gym-lab-1`, host RCON `27001`: PASS for reset, 20 masked-action transitions, observation dimensions, finite rewards and Gymnasium return contract.
+- Lab save `rc6_lab_smoke_20261018.zip`: PASS for native export, ZIP integrity and researcher-confirmed loading in desktop Factorio.
+- Existing Open Play server on RCON `27000` remained running during the separate Lab test.
+- GitHub Actions static package checks: PASS on release-preparation commit `7d41a4b`.
+- Source distribution contents: PASS for documentation, scripts, notices and manifest. Wheel contents: PASS for renamed internal modules.
+- Fresh Python 3.12 virtual environment: PASS for wheel installation, `pip check`, version verification and importing the public API from `site-packages`.
+- Initial upstream comparison: no exact matches of 12 consecutive nonblank/non-comment lines across 18 local Python files against 347 installed FLE Python files. This is not proof of independent authorship.
 
-1. On a disposable **Lab Play** server, verify a fresh reset, observations,
-   action masks, steps, rewards and diagnostics on rc6.
-2. Compare the **ordered** action names and observation feature names (not just
-   their lengths) against the validated rc5 contract; inspect normalization
-   and effective reward semantics for unintended changes.
-3. If further code changes affect saving, rerun native save archive integrity
-   and desktop-game loading. Existing pre-refactor save evidence does not
-   establish a post-refactor test.
-4. Run GitHub Actions after pushing the release-preparation branch; audit
-   distribution contents and ideally install in a **fresh** virtual environment.
-5. Complete per-file upstream/code-provenance and license/ownership review
-   before any public publication. Test research completion and long-run
-   reliability separately where those capabilities are claimed.
+## Remaining release gates
+
+- Complete the file-level provenance, ownership and licensing review before public distribution.
+- Finish checking the complete distribution inventory for unintended files and sensitive information.
+- Test additional reward semantics, full-horizon behavior and research progression if making claims about these capabilities. The 4,096-step tests remain pre-refactor evidence.
+- Update release documentation and version references for the final reviewed commit.
+- Build and validate the final `1.0.0` archives before tagging.
 
 ## Commands and reproducibility
 
