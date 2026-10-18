@@ -2,6 +2,19 @@
 
 All dates and status claims below distinguish completed rc5 validation from changes being prepared for rc6.
 
+## [1.0.0] — Private release preparation
+
+- Promote the validated `1.0.0rc6` implementation to version `1.0.0`.
+- Preserve the 124-action and 266-observation interface.
+- Include Lab Play and Open Play integration, documentation,
+  source distribution and native Factorio save support.
+- Keep the original-contributions personal non-commercial license
+  and independent upstream FLE MIT notices.
+- Public distribution remains pending supervisor guidance on
+  licensing and applicable ownership requirements.
+- Known limitation: full automated factory progression and
+  post-refactor iron-plate production are not established.
+
 ## [1.0.0rc6] — release preparation (Lab/Open Play integration verified)
 
 ### Changed

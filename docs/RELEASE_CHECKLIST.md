@@ -1,6 +1,6 @@
 # Final release checklist
 
-**Current status:** source-preparation candidate `1.0.0rc6`; **not** a final, publicly verified `1.0.0` release. This checklist lists conditions to complete before changing repository visibility or publishing an archive.
+**Current status:** version `1.0.0` is being prepared for a private GitHub release; public distribution remains pending licensing and ownership confirmation. This checklist lists conditions to complete before changing repository visibility or publishing an archive.
 
 ## rc6 evidence already collected (18 October 2026)
 
