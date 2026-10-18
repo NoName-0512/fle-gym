@@ -245,7 +245,7 @@ Runtime_EXTRA_ACTIONS: Tuple[ActionSpec, ...] = (
 )
 
 
-def _actions_ajweuzp() -> Tuple[ActionSpec, ...]:
+def _actions_feasibility() -> Tuple[ActionSpec, ...]:
     actions: List[ActionSpec] = []
     for spec in IMPROVED_ACTIONS:
         # Electronics and Automation science pack are trigger technologies in
@@ -264,10 +264,10 @@ def _actions_ajweuzp() -> Tuple[ActionSpec, ...]:
     return tuple(actions)
 
 
-Runtime_ACTIONS: Tuple[ActionSpec, ...] = _actions_ajweuzp()
+Runtime_ACTIONS: Tuple[ActionSpec, ...] = _actions_feasibility()
 
 
-class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
+class FactorioOpenEndedEnvFeasibility(FactorioOpenEndedEnvObservation):
     """Goal-free horizon environment with logistics and assembly automation."""
 
     def __init__(
@@ -331,7 +331,7 @@ class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
             shape=(len(self.observation_feature_names),),
             dtype=np.float32,
         )
-        self._write_config_ajweuzp()
+        self._write_config_feasibility()
 
     @staticmethod
     def _empty_feasibility_state() -> Dict[str, Any]:
@@ -374,9 +374,9 @@ class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
         )
         return state
 
-    def _write_config_ajweuzp(self) -> None:
+    def _write_config_feasibility(self) -> None:
         payload = {
-            "environment": "FactorioOpenEndedEnvAjweuzp",
+            "environment": "FactorioOpenEndedEnvFeasibility",
             "terminal_goal": None,
             "training_horizon_steps": self.training_horizon_steps,
             "action_count": len(self.actions),
@@ -410,7 +410,7 @@ class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
     def _raw_units(items: Mapping[str, float]) -> float:
         return sum(max(0.0, float(amount)) for amount in items.values())
 
-    def _feasibility_command_ajweuzp(self) -> str:
+    def _feasibility_command_feasibility(self) -> str:
         marker = json.dumps(Runtime_FEASIBILITY_MARKER)
         recipes = (
             "electronic-circuit",
@@ -468,7 +468,7 @@ class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
         if not force and self.global_step % self.feasibility_state_every != 0:
             return state
         try:
-            raw = str(self.instance.rcon_client.send_command(self._feasibility_command_ajweuzp()) or "")
+            raw = str(self.instance.rcon_client.send_command(self._feasibility_command_feasibility()) or "")
             line = next((line for line in raw.splitlines() if Runtime_FEASIBILITY_MARKER in line), "")
             if not line:
                 raise RuntimeError(f"runtime feasibility marker missing: {raw[:400]!r}")
@@ -803,7 +803,7 @@ class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
             raise RuntimeError(f"unsupported runtime lab research target: {target}")
         return super()._queue_research_runtime(target)
 
-    def _clear_storage_ajweuzp(self) -> None:
+    def _clear_storage_feasibility(self) -> None:
         try:
             self.instance.rcon_client.send_command(
                 "/sc storage.fle_rl_runtime={lines={},cells={}}"
@@ -898,7 +898,7 @@ class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
         observation, info = super().reset(seed=seed, options=options)
         hard = bool(dict(options or {}).get("hard_reset", self.hard_reset))
         if hard:
-            self._clear_storage_ajweuzp()
+            self._clear_storage_feasibility()
             self.machine_output_units_total = 0.0
             self.manual_crafted_units_total = 0.0
             self.manual_harvested_units_total = 0.0
@@ -1137,11 +1137,11 @@ class FactorioOpenEndedEnvAjweuzp(FactorioOpenEndedEnvObservation):
         return self._observation(), float(reward), bool(terminated), bool(truncated), final_info
 
 
-FactorioOpenEndedEnvImprovedRuntime = FactorioOpenEndedEnvAjweuzp
+FactorioOpenEndedEnvImprovedRuntime = FactorioOpenEndedEnvFeasibility
 
 __all__ = [
     "FactorioOpenEndedEnvImprovedRuntime",
-    "FactorioOpenEndedEnvAjweuzp",
+    "FactorioOpenEndedEnvFeasibility",
     "LAB_RESEARCH_TARGETS",
     "MACHINE_OUTPUT_WEIGHTS",
     "TRIGGER_TECHNOLOGIES",

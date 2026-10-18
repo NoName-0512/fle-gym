@@ -8,7 +8,7 @@ from typing import Any
 from ._bootstrap import activate_internal_path
 activate_internal_path()
 from factorio_openended_env_machine import Runtime_ACTIONS  # type: ignore  # noqa: E402
-from factorio_openended_env_research_yqeibtv import Runtime_RESEARCH_TARGETS, Runtime_TRIGGER_TECHNOLOGIES, CRAFT_BY_ACTION  # type: ignore  # noqa: E402
+from factorio_openended_env_extended import Runtime_RESEARCH_TARGETS, Runtime_TRIGGER_TECHNOLOGIES, CRAFT_BY_ACTION  # type: ignore  # noqa: E402
 from factorio_transition_env import TRACKED_ITEMS  # type: ignore  # noqa: E402
 
 

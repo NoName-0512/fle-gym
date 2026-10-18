@@ -32,13 +32,13 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 import numpy as np
 
-from factorio_openended_env_research_ajweuzp import FactorioOpenEndedEnvAjweuzp
+from factorio_openended_env_feasibility import FactorioOpenEndedEnvFeasibility
 from factorio_openended_env_recipe import (
     FactorioOpenEndedEnvRuntime,
     MACHINE_SOURCE_KIND,
     PROGRESSION_MILESTONE_REWARDS,
 )
-from factorio_openended_env_research_ajweuzp import (
+from factorio_openended_env_feasibility import (
     MACHINE_OUTPUT_WEIGHTS,
     MANUAL_CRAFT_OUTPUTS,
     Runtime_ACTIONS,
@@ -314,7 +314,7 @@ def _marker_action(name: str, category: str, description: str) -> ActionSpec:
     )
 
 
-def _build_actions_yqeibtv() -> Tuple[ActionSpec, ...]:
+def _build_actions_extended() -> Tuple[ActionSpec, ...]:
     actions: List[ActionSpec] = []
     for spec in Runtime_ACTIONS:
         # Redirect the unreliable legacy geometry helpers to runtime transactional
@@ -388,10 +388,10 @@ def _build_actions_yqeibtv() -> Tuple[ActionSpec, ...]:
     return tuple(actions)
 
 
-Runtime_ACTIONS: Tuple[ActionSpec, ...] = _build_actions_yqeibtv()
+Runtime_ACTIONS: Tuple[ActionSpec, ...] = _build_actions_extended()
 
 
-class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
+class FactorioOpenEndedEnvExtended(FactorioOpenEndedEnvRuntime):
     """Expanded shared environment for PPO, discrete SAC, and MAP-Elites."""
 
     def __init__(
@@ -450,7 +450,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
             shape=(len(self.observation_feature_names),),
             dtype=np.float32,
         )
-        self._write_config_yqeibtv()
+        self._write_config_extended()
 
     # ------------------------------------------------------------------
     # Configuration and schema
@@ -493,7 +493,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         )
         return schema
 
-    def _write_config_yqeibtv(self) -> None:
+    def _write_config_extended(self) -> None:
         payload = {
             "version": Runtime_VERSION,
             "action_count": int(self.action_space.n),
@@ -518,7 +518,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
     # ------------------------------------------------------------------
     # Live state and authoritative entity/inventory synchronisation
     # ------------------------------------------------------------------
-    def _state_command_yqeibtv(self) -> str:
+    def _state_command_extended(self) -> str:
         recipes = tuple(dict.fromkeys(self.runtime_recipe_names + ("lab", "automation-science-pack", "iron-gear-wheel", "transport-belt", "inserter", "assembling-machine-1")))
         recipe_lua = "{" + ",".join(json.dumps(name) for name in recipes) + "}"
         techs = tuple(dict.fromkeys(Runtime_TRIGGER_TECHNOLOGIES + Runtime_RESEARCH_TARGETS))
@@ -555,11 +555,11 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
     def _collect_feasibility_state(self, *, force: bool = False) -> Dict[str, Any]:
         # Skip the runtime approximate geometry preflight. runtime queries authoritative
         # live state and uses matching layout searches in the runtime planners.
-        state = FactorioOpenEndedEnvAjweuzp._collect_feasibility_state(self, force=force)
+        state = FactorioOpenEndedEnvFeasibility._collect_feasibility_state(self, force=force)
         if not force and self.global_step % self.feasibility_state_every != 0:
             return state
         try:
-            raw = str(self.instance.rcon_client.send_command(self._state_command_yqeibtv()) or "")
+            raw = str(self.instance.rcon_client.send_command(self._state_command_extended()) or "")
             line = next((line for line in raw.splitlines() if Runtime_STATE_MARKER in line), "")
             if not line:
                 raise RuntimeError(f"runtime state marker missing: {raw[:400]!r}")
@@ -623,7 +623,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
     def get_action_mask(self) -> np.ndarray:
         # Use runtime's live inventory/machine mask as the base, bypassing runtime's
         # approximate geometry preflight that caused the run-time mismatch.
-        mask = FactorioOpenEndedEnvAjweuzp.get_action_mask(self).astype(np.int8)
+        mask = FactorioOpenEndedEnvFeasibility.get_action_mask(self).astype(np.int8)
         f = self.feasibility_state
         live = bool(f.get("runtime_query_ok", False))
 
@@ -808,7 +808,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         raw = str(self.instance.rcon_client.send_command(command) or "")
         return self._parse_runtime_result(raw, marker)
 
-    def _runtime_place_furnace_near_drill_yqeibtv(self) -> Dict[str, Any]:
+    def _runtime_place_furnace_near_drill_extended(self) -> Dict[str, Any]:
         marker = f"{Runtime_RUNTIME_MARKER}_FURNACE"
         command = (
             "/sc local marker=" + json.dumps(marker) + "; local function run() "
@@ -824,7 +824,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
             "local function find_layout(inputs) local origin=p.position; for slot=0,120 do local col=slot%7; local row=math.floor(slot/7); local x=origin.x+18+col*16; local y=origin.y-56+row*14; local c={{'assembling-machine-1',{x=x,y=y},defines.direction.east},{'wooden-chest',{x=x-4,y=y},defines.direction.east},{'inserter',{x=x-2,y=y},defines.direction.east},{'inserter',{x=x+2,y=y},defines.direction.east},{'transport-belt',{x=x+3,y=y},defines.direction.east},{'transport-belt',{x=x+4,y=y},defines.direction.east},{'transport-belt',{x=x+5,y=y},defines.direction.east},{'inserter',{x=x+6,y=y},defines.direction.east},{'wooden-chest',{x=x+7,y=y},defines.direction.east},{'small-electric-pole',{x=x+4,y=y+4},defines.direction.east}}; if inputs>=2 then c[#c+1]={'wooden-chest',{x=x,y=y-4},defines.direction.east}; c[#c+1]={'inserter',{x=x,y=y-2},defines.direction.south} end; if inputs>=3 then c[#c+1]={'wooden-chest',{x=x,y=y+4},defines.direction.east}; c[#c+1]={'inserter',{x=x,y=y+2},defines.direction.north} end; local ok=true; for _,q in ipairs(c) do if not s.can_place_entity{name=q[1],position=q[2],force=f,direction=q[3]} then ok=false; break end end; if ok then return {x=x,y=y,candidates=c} end end; return nil end; "
         )
 
-    def _runtime_create_cell_yqeibtv(self, key: str) -> Dict[str, Any]:
+    def _runtime_create_cell_extended(self, key: str) -> Dict[str, Any]:
         recipe = Runtime_CELL_RECIPES[key]
         inputs = Runtime_CELL_INPUTS[key]
         marker = f"{Runtime_RUNTIME_MARKER}_CELL"
@@ -842,9 +842,9 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
     # Existing runtime actions are transparently upgraded to the runtime cell builder.
     def _runtime_create_assembly_cell(self, recipe_name: str, cell_key: str) -> Dict[str, Any]:
         key = "science" if recipe_name == "automation-science-pack" else "gear"
-        return self._runtime_create_cell_yqeibtv(key)
+        return self._runtime_create_cell_extended(key)
 
-    def _runtime_stock_cell_yqeibtv(self, key: str) -> Dict[str, Any]:
+    def _runtime_stock_cell_extended(self, key: str) -> Dict[str, Any]:
         marker = f"{Runtime_RUNTIME_MARKER}_STOCK"
         command = (
             "/sc local marker=" + json.dumps(marker) + "; local function run() "
@@ -854,7 +854,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         raw = str(self.instance.rcon_client.send_command(command) or "")
         return self._parse_runtime_result(raw, marker)
 
-    def _runtime_create_steel_cell_yqeibtv(self) -> Dict[str, Any]:
+    def _runtime_create_steel_cell_extended(self) -> Dict[str, Any]:
         marker = f"{Runtime_RUNTIME_MARKER}_STEEL"
         command = (
             "/sc local marker=" + json.dumps(marker) + "; local function run() "
@@ -864,7 +864,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         raw = str(self.instance.rcon_client.send_command(command) or "")
         return self._parse_runtime_result(raw, marker)
 
-    def _runtime_stock_steel_yqeibtv(self) -> Dict[str, Any]:
+    def _runtime_stock_steel_extended(self) -> Dict[str, Any]:
         marker = f"{Runtime_RUNTIME_MARKER}_STEELSTOCK"
         command = (
             "/sc local marker=" + json.dumps(marker) + "; local function run() "
@@ -874,7 +874,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         raw = str(self.instance.rcon_client.send_command(command) or "")
         return self._parse_runtime_result(raw, marker)
 
-    def _runtime_feed_labs_yqeibtv(self) -> Dict[str, Any]:
+    def _runtime_feed_labs_extended(self) -> Dict[str, Any]:
         """Move available science into labs using Factorio's real input capacity.
 
         runtime still carried an old absolute ``50 - current_count`` target even
@@ -923,7 +923,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         raw = str(self.instance.rcon_client.send_command(command) or "")
         return self._parse_runtime_result(raw, marker)
 
-    def _runtime_connect_power_yqeibtv(self, target_names: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+    def _runtime_connect_power_extended(self, target_names: Optional[Sequence[str]] = None) -> Dict[str, Any]:
         marker = f"{Runtime_RUNTIME_MARKER}_POWER"
         targets = tuple(target_names or ("electric-mining-drill", "inserter", "long-handed-inserter", "fast-inserter", "assembling-machine-1", "assembling-machine-2", "lab", "pumpjack", "oil-refinery", "chemical-plant"))
         target_lua = "{" + ",".join(json.dumps(name) for name in targets) + "}"
@@ -937,10 +937,10 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
 
     # Existing runtime factory-power action now connects one target atomically.
     def _runtime_connect_factory_power(self) -> Dict[str, Any]:
-        return self._runtime_connect_power_yqeibtv()
+        return self._runtime_connect_power_extended()
 
     def _runtime_connect_lab_power(self) -> Dict[str, Any]:
-        return self._runtime_connect_power_yqeibtv(("lab",))
+        return self._runtime_connect_power_extended(("lab",))
 
     def _queue_research_runtime(self, target: str) -> Dict[str, Any]:
         if target not in Runtime_RESEARCH_TARGETS:
@@ -1061,7 +1061,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
             dtype=np.float32,
         )
         try:
-            base = FactorioOpenEndedEnvAjweuzp._observation(self)
+            base = FactorioOpenEndedEnvFeasibility._observation(self)
         finally:
             self.observation_feature_names = final_names
             self.observation_space = final_space
@@ -1181,23 +1181,23 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         final["environment_schema_path"] = str(Path(self.run_dir) / "environment_schema_runtime.json")
         return self._observation(), final
 
-    def _dispatch_runtime_yqeibtv(self, action_name: str) -> Optional[Dict[str, Any]]:
+    def _dispatch_runtime_extended(self, action_name: str) -> Optional[Dict[str, Any]]:
         if action_name == "place_furnace_near_drill":
-            return self._runtime_place_furnace_near_drill_yqeibtv()
+            return self._runtime_place_furnace_near_drill_extended()
         if action_name == "connect_electric_drill_to_power":
-            return self._runtime_connect_power_yqeibtv(("electric-mining-drill",))
+            return self._runtime_connect_power_extended(("electric-mining-drill",))
         if action_name in CRAFT_BY_ACTION:
             return self._runtime_begin_craft(CRAFT_BY_ACTION[action_name])
         if action_name in Runtime_NEW_CELL_ACTIONS:
-            return self._runtime_create_cell_yqeibtv(Runtime_NEW_CELL_ACTIONS[action_name])
+            return self._runtime_create_cell_extended(Runtime_NEW_CELL_ACTIONS[action_name])
         if action_name in Runtime_STOCK_ACTIONS:
-            return self._runtime_stock_cell_yqeibtv(Runtime_STOCK_ACTIONS[action_name])
+            return self._runtime_stock_cell_extended(Runtime_STOCK_ACTIONS[action_name])
         if action_name == "build_steel_smelting_cell":
-            return self._runtime_create_steel_cell_yqeibtv()
+            return self._runtime_create_steel_cell_extended()
         if action_name == "stock_steel_smelting_cell":
-            return self._runtime_stock_steel_yqeibtv()
+            return self._runtime_stock_steel_extended()
         if action_name == "feed_labs_all_science":
-            return self._runtime_feed_labs_yqeibtv()
+            return self._runtime_feed_labs_extended()
         if action_name.startswith("research_"):
             target = action_name[len("research_"):].replace("_", "-")
             if target in Runtime_RESEARCH_TARGETS and target not in {"automation", "logistics", "steel-processing"}:
@@ -1220,7 +1220,7 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
         # runtime additions and redirected legacy aliases here.
         if not info.get("action_error"):
             try:
-                runtime_result = self._dispatch_runtime_yqeibtv(action_name)
+                runtime_result = self._dispatch_runtime_extended(action_name)
             except Exception as exc:
                 runtime_error = f"{type(exc).__name__}: {exc}"
                 self.runtime_runtime_failures[action_name] += 1
@@ -1338,13 +1338,13 @@ class FactorioOpenEndedEnvYqeibtv(FactorioOpenEndedEnvRuntime):
 
 
 # Compatibility alias used by public import and tools.
-FactorioOpenEndedEnvRuntime = FactorioOpenEndedEnvYqeibtv
+FactorioOpenEndedEnvRuntime = FactorioOpenEndedEnvExtended
 
 
 __all__ = [
     "CraftSpec",
     "FactorioOpenEndedEnvRuntime",
-    "FactorioOpenEndedEnvYqeibtv",
+    "FactorioOpenEndedEnvExtended",
     "Runtime_ACTIONS",
     "Runtime_CELL_INPUTS",
     "Runtime_CELL_RECIPES",

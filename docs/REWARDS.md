@@ -1,6 +1,6 @@
-# Reward and observation semantics — review draft
+# Reward design and diagnostic semantics
 
-This is a **source-derived draft**, not a finalized mathematical proof that every component is free of double counting. The public wrapper constructs a `FactorioOpenEndedEnvResearch` adapter on top of multiple environment layers, so the **returned `reward` and `info['reward_parts']`** are authoritative for each step. Intermediate ancestors' reward values may be replaced or adjusted by descendants.
+This is a **source-derived implementation reference**, not a formally audited proof that every component is free of double counting. The public wrapper constructs a `FactorioOpenEndedEnvResearch` adapter on top of multiple environment layers, so the **returned `reward` and `info['reward_parts']`** are authoritative for each step. Intermediate ancestors' reward values may be replaced or adjusted by descendants.
 
 ## Default semantic parameters
 
@@ -55,6 +55,10 @@ Several cumulative output features are scaled with `log1p(value)/5`, so the obse
 
 The public configuration sets a 4096-step horizon. `truncated=True` on step 4096 is a time limit, not successful research or game completion. The source explicitly says there is no product/research terminal goal; `terminated=False` is normally expected.
 
-## Required before describing rewards in an academic paper
+## Scientific reporting and limitations
 
 Provide an exact, source-reviewed expression for each final reward component, verify no duplicate credit between runtime layers, and include how weighted item production, scientific technology milestones, handcraft exclusion, action masks and simulated-time normalization affect policy incentives. Cite the exact source commit and release tag used for the experiment.
+
+## Reproducibility
+
+Report the FLE-Gym commit/tag, upstream FLE version, scenario, reward overrides, horizon, policy/action-masking method, and the exact interpretation of `info["reward_parts"]`. The rc6 changes rename internal Python identifiers only; no reward redesign is intended. This should be checked with a live reward/telemetry comparison before publication.
