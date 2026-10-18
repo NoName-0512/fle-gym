@@ -2,7 +2,7 @@
 
 **A Gymnasium-compatible interface for reinforcement learning in Factorio, built on the Factorio Learning Environment (FLE).**
 
-FLE-Gym exposes a stable, discrete decision interface so researchers can connect their own reinforcement-learning or quality-diversity agents to an existing Factorio server. The package provides action masks, numeric observations, reward diagnostics, scenario-specific environment classes, and native Factorio save export. It does **not** bundle a trained agent, train PPO/SAC/MAP-Elites, or manage the Factorio cluster.
+This release contains the **Gym-facing FLE/Factorio environment only**. It exposes a stable, discrete decision interface so researchers can connect their own reinforcement-learning or quality-diversity agents to an existing Factorio server. The package provides action masks, numeric observations, reward diagnostics, scenario-specific environment classes, and native Factorio save export. It does **not** bundle a trained agent, train PPO/SAC/MAP-Elites, or manage the Factorio cluster.
 
 **Release status:** `1.0.0` is being prepared for a private GitHub release following rc6 validation. The package passed offline regression checks, live Lab/Open Play integration, native save export, GitHub CI and clean installation. Full factory automation and rc6 iron-plate production have not been demonstrated. Public distribution remains on hold pending licensing and ownership confirmation; see [Validation](docs/VALIDATION.md).
 
