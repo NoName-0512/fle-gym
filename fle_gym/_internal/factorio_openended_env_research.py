@@ -1696,6 +1696,14 @@ class FactorioOpenEndedEnvResearch(FactorioOpenEndedEnvCraft):
                 raise RuntimeError(f"deterministic headless setup failed: {setup}")
         self._collect_reachability_research(force=True)
         self._collect_feasibility_state(force=True)
+        # Synchronize entities created during the reset bootstrap.
+        self._sync_authoritative_entity_counts()
+
+        # Initial conditions must not earn agent progression rewards.
+        self.progression_milestones_seen.update(
+            self._current_progress_milestones()
+        )
+
         self._runtime_seen_lab_research = set(self._lab_researched_set())
         self._runtime_research_progress = {}
         self._last_science_readiness_runtime = self._science_readiness_research()
