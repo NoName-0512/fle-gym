@@ -119,11 +119,6 @@ This uses Factorio's server save command, copies the ZIP from the selected Docke
 | [Release checklist](docs/RELEASE_CHECKLIST.md) | Gates before a public, final release |
 | [Change log](CHANGELOG.md) | Notable package changes |
 
-## Boundaries and reproducibility
-
-The package intentionally excludes training loops, saved policies, five-replica scheduling, experiment dashboards, resumption/orchestration infrastructure, dissertation results and Factorio game files. High-level actions perform deterministic planning and game API operations, but **the policy decides which action to take**. The wrapper is not a vision-learning environment: its current agent observation is a 266-element numeric vector, not screenshots.
-
-For comparable research, report the package commit/tag, FLE/Factorio versions, server scenario, action catalogue, observation schema, reset/seed behavior, reward overrides, time limit, and agent action-masking method. The reward diagnostics should be interpreted with the cautions in [Rewards](docs/REWARDS.md).
 
 ## License, upstream attribution and provenance
 
