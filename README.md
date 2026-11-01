@@ -15,7 +15,7 @@ This release contains the **Gym-facing FLE/Factorio environment only**. It expos
 | Observation space | Numeric `Box`, shape `(266,)` |
 | Action feasibility | Boolean mask `(124,)` via `env.action_masks()` |
 | Scenarios | Lab Play (`default_lab_scenario`), Open Play (`open_world`) |
-| Default time limit | 4,096 environment decisions (`truncated=True`) |
+| Default time limit | 4096 environment decisions (`truncated=True`) |
 | Runtime | Existing Factorio/FLE instance over TCP RCON |
 | Python | Tested in Python 3.12; metadata allows Python >=3.10 |
 | Primary upstream dependency | `factorio-learning-environment==0.4.3` |
