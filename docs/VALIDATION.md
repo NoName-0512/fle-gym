@@ -88,3 +88,19 @@ Run the `open_world` command only when the server was actually launched with `op
 ## Interpreting validation results
 
 A valid masked action can still fail due to changing game state or runtime rejection; inspect `info` for the actual result. Research readiness and completion need dedicated end-to-end validation. Reward aggregation includes inherited and normalized components. See [Rewards](REWARDS.md) for reward settings and diagnostic semantics.
+
+## Five-minute telemetry and save validation - 1 November 2026
+
+GitHub main at commit `d0158d982574ee3c99cc48b4e7ab21cf74284e88` was loaded from a separate source clone using FLE 0.4.3, Gymnasium 1.3.0, NumPy 2.5.1, and Factorio 2.0.77 on WSL Ubuntu 24.04.
+
+A disposable server on RCON port 27001 ran 301.073 seconds of uniformly sampled masked-feasible actions with seed 104: 132 transitions covering 31 of 124 actions. The Open Play wrapper was used; the server scenario identity was not independently established.
+
+- All transition observations passed shape, finiteness, and declared-space checks; action masks passed shape and Boolean-type checks.
+- Returned rewards matched `info.reward`, `reward_parts.total`, and the sum of components including residual.
+- Tick-to-seconds and machine reward normalization checks passed. Effective settings were coefficient 0.35, normalization enabled, and reference duration 1.0 second.
+- Seven transitions returned positive machine-production reward. All used the one-second denominator floor; longer-interval positive production remains untested by this run.
+- No action-error or environment-rejection flags were observed. All returned telemetry was recorded, including 142 distinct top-level info fields and native package diagnostics.
+- 57 transitions had nonzero reward residuals, ranging from approximately -0.010667 to +0.1. Some offset idle penalties or research-progress components. This establishes accounting consistency including residual, not full semantic reconciliation or independent physical correctness of every field.
+- The native save exported through `env.save_world` passed ZIP integrity checks. A separate network-disabled Factorio process loaded it, advanced 120 ticks, and exited successfully. Desktop visual inspection and FLE API restoration after storage scrubbing were not tested.
+
+The random-action harness recorded built-in FLE-Gym outputs; independent save reloading was an additional harness check. This run did not cover every action, both server scenarios, full research progression, or the 4096-step horizon.

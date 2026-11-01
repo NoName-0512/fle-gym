@@ -1,6 +1,15 @@
 # Changelog
 
-All dates and status claims below distinguish completed rc5 validation from changes being prepared for rc6.
+Entries below record changes and validation for each version. Historical release-candidate notes describe their status at the time.
+
+## [1.0.1] - 1 November 2026
+
+- Prevent reset-created entities and initial milestones from earning agent progression rewards.
+- Document all 14 machine-production weights, the effective public production coefficient of 0.35, and simulated-time normalization with a one-second reference.
+- Remove obsolete release-preparation wording and provide a reusable release checklist.
+- Record a 301-second masked-random rollout of 132 transitions against commit d0158d9, with telemetry consistency checks and native save export.
+- Independently load the exported save in Factorio 2.0.77 and advance it for 120 ticks.
+- Known diagnostic limitation: 57 transitions had nonzero reward residuals; named reward components do not yet fully explain the scalar reward without the residual.
 
 ## [1.0.0] — Private release preparation
 
