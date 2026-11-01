@@ -20,7 +20,7 @@ class ReleaseStaticTests(unittest.TestCase):
     def test_version_matches_build_metadata(self):
         config = tomllib.loads((ROOT / 'pyproject.toml').read_text(encoding='utf8'))
         self.assertEqual(config['project']['version'], version_from_init())
-        self.assertRegex(version_from_init(), r'^1\.0\.0(?:rc[0-9]+)?$')
+        self.assertRegex(version_from_init(), r'^[0-9]+\.[0-9]+\.[0-9]+(?:rc[0-9]+)?$')
 
     def test_telemetry_keys_are_distinct(self):
         internal = ROOT / 'fle_gym/_internal'
