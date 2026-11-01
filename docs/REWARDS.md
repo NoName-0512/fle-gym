@@ -1,64 +1,182 @@
 # Reward design and diagnostic semantics
 
-This is a **source-derived implementation reference**, not a formally audited proof that every component is free of double counting. The public wrapper constructs a `FactorioOpenEndedEnvResearch` adapter on top of multiple environment layers, so the **returned `reward` and `info['reward_parts']`** are authoritative for each step. Intermediate ancestors' reward values may be replaced or adjusted by descendants.
+FLE-Gym combines machine-production rewards, research and factory-progression rewards, and penalties for unproductive or unsuccessful actions.
 
-## Default semantic parameters
+The public environment returns the final scalar reward from `env.step()`, together with a component breakdown in `info["reward_parts"]`. Internal environment layers calculate and adjust these components before returning the transition.
 
-The following are configured by `fle_gym/_internal/environment_contract.py` and converted into environment keyword arguments. Values can be changed using `semantic_overrides` where supported.
+## Default parameters
 
-| Parameter | Default | Meaning / caveat |
+The public defaults are defined in `fle_gym/_internal/environment_contract.py`. Supported settings can be changed through `semantic_overrides`.
+
+| Parameter | Default | Description |
 |---|---:|---|
-| `speed` | 10.0 | Factorio game-speed setting |
-| `settle_seconds` | 0.04 | Post-action settling interval (scaled by action) |
-| `training_horizon` | 4096 | Time-limit truncation; not an endogenous terminal goal |
-| `production_reward_scale` | 0.35 | Weighted machine-output reward coefficient; downstream normalization/correction applies |
-| `research_progress_reward` | 12.0 | Research-progress reward coefficient before final time normalization and cap |
-| `research_progress_reward_cap` | 1.0 | Caps final research-progress component per transition |
-| `trigger_technology_reward` | 3.0 | A newly completed trigger technology in a dedicated runtime layer |
-| `lab_research_completion_reward` | 12.0 | Newly completed laboratory technology, subject to duplicate prevention |
-| `research_activity_reward` | 0.02 | Small research-activity shaping term |
-| `lab_ingredient_potential_reward` | 20.0 | Changes in laboratory-ingredient potential; may be negative if inventory is consumed |
-| `idle_action_penalty` | 0.10 | Idle actions with no credited production/research progress in one runtime layer |
-| `repeated_idle_penalty` | 0.08 | Applied for consecutive unproductive idle actions, with per-step cap 0.50 |
-| `machine_reward_reference_seconds` | 1.0 | Target duration used for machine reward normalization |
-| `normalize_machine_reward_by_sim_time` | True | Machine reward is divided by `max(1, simulated_seconds_elapsed)` and multiplied by reference time |
-| `environment_rejection_cooldown_steps` | 24 | Masks known environment-side rejection actions for a period |
-| `production_stats_every` | 3 | Production state refresh cadence; some descendants force additional refreshes |
-| `infrastructure_state_every` | 3 | Infrastructure refresh cadence |
-| `feasibility_state_every` | 2 | Feasibility refresh cadence |
+| `speed` | 10.0 | Factorio game speed |
+| `settle_seconds` | 0.04 | Post-action settling interval, scaled by action |
+| `training_horizon` | 4096 | Maximum environment decisions before time-limit truncation |
+| `production_reward_scale` | 0.35 | Coefficient applied to weighted machine production |
+| `research_progress_reward` | 12.0 | Research-progress coefficient before time normalization and capping |
+| `research_progress_reward_cap` | 1.0 | Maximum normalized research-progress reward per transition |
+| `trigger_technology_reward` | 3.0 | Reward for a newly completed trigger technology |
+| `lab_research_completion_reward` | 12.0 | Reward for newly completed laboratory research, with duplicate prevention |
+| `research_activity_reward` | 0.02 | Research-activity shaping coefficient |
+| `lab_ingredient_potential_reward` | 20.0 | Coefficient for changes in laboratory-ingredient potential |
+| `idle_action_penalty` | 0.10 | Penalty for idle actions without credited production or research progress |
+| `repeated_idle_penalty` | 0.08 | Additional penalty for consecutive unproductive idle actions, capped at 0.50 per step |
+| `machine_reward_reference_seconds` | 1.0 | Reference duration for machine-production normalization |
+| `normalize_machine_reward_by_sim_time` | True | Enables normalization by elapsed simulated time |
+| `environment_rejection_cooldown_steps` | 24 | Number of steps for which known environment-side rejection actions are masked |
+| `production_stats_every` | 3 | Production-state refresh interval in environment steps |
+| `infrastructure_state_every` | 3 | Infrastructure-state refresh interval in environment steps |
+| `feasibility_state_every` | 2 | Feasibility-state refresh interval in environment steps |
 
-Other inherited terms are configured at environment layer level, notably `openended_step_penalty=0.001`, `first_power_reward=10.0`, `infrastructure_growth_reward=0.25`, and `science_readiness_reward=12.0`. Inspect the final class MRO and `info['reward_parts']` to confirm effective values and contributions.
+Additional terms are defined in the internal environment layers, including:
 
-## Canonical reward diagnostics
+| Parameter | Default | Description |
+|---|---:|---|
+| `openended_step_penalty` | 0.001 | Per-step penalty |
+| `first_power_reward` | 10.0 | First-power milestone reward |
+| `infrastructure_growth_reward` | 0.25 | Infrastructure-growth shaping coefficient |
+| `science_readiness_reward` | 12.0 | Science-readiness shaping coefficient |
 
-The last canonical aggregator (`factorio_openended_env_recipe.py`, `_canonical_reward_parts`) groups rewards into: `machine_production`, `research_progress`, `research_completion`, `research_activity`, `power_milestone`, `infrastructure`, `logistics_milestone`, `progression_milestone`, `idle`, `step`, `error`, `invalid`, `legacy_base`, `environment_rejection`, `residual`, `total`. Descendant runtime layers also account for `lab_ingredient_progress`, `science_readiness`, `repeated_idle_penalty`, and research-completion adjustments.
+Refresh intervals control periodic state collection. Some actions and environment layers request additional state refreshes.
 
-The `residual` is deliberately computed as `returned_reward - sum(named_parts)` in the canonical aggregator. Its existence means the named list must not automatically be interpreted as a complete independent additive scientific model until the final returned diagnostics are reconciled. Compare `reward`, `info['reward_parts']['total']`, and the sum of individual components on real transitions; audit duplicate/overwritten telemetry keys first.
+## Machine-production rewards
 
-## Machine production and time normalization
+Machine production uses an item-specific weight table. Credited output is multiplied by the item weight and the production coefficient.
 
-`factorio_openended_env_machine.py` normalizes positive machine rewards as approximately:
+The effective table contains 14 unique items:
 
-\[
- r_{\mathrm{machine,norm}} = r_{\mathrm{machine,raw}} \times \frac{t_{\mathrm{ref}}}{\max(1,t_{\mathrm{sim}})}
-\]
+| Item | Weight |
+|---|---:|
+| `iron-ore` | 0.02 |
+| `copper-ore` | 0.02 |
+| `iron-plate` | 0.40 |
+| `copper-plate` | 0.40 |
+| `steel-plate` | 1.20 |
+| `iron-gear-wheel` | 0.80 |
+| `electronic-circuit` | 1.20 |
+| `copper-cable` | 0.20 |
+| `transport-belt` | 0.70 |
+| `inserter` | 1.00 |
+| `engine-unit` | 2.00 |
+| `automation-science-pack` | 2.50 |
+| `logistic-science-pack` | 4.00 |
+| `military-science-pack` | 5.00 |
 
-where `t_ref` defaults to one second. Further strict attribution in `factorio_openended_env_recipe.py` removes output wrongly attributed to machines when it could be from manual craft/harvest actions.
+The initial table is defined in `fle_gym/_internal/factorio_openended_env_feasibility.py` and extended in `fle_gym/_internal/factorio_openended_env_extended.py`.
 
-## Observations are **not** raw item counts
+Manual crafting and harvesting are excluded from machine-production credit. Attribution also accounts for delayed manual-output records. Unknown products, fluids, and item transfers do not receive machine-production credit.
 
-Several inventory/entity features use `min(10, log1p(max(0,count)))`. Thus the observed iron-plate inventory value `1.791759` is consistent with `log(1+5)` = five iron plates—not 1.791759 physical plates.
+Before time normalization, the machine-production component is:
 
-Several cumulative output features are scaled with `log1p(value)/5`, so the observed `machine_output_total=0.389753` is a normalized measurement, not a count or reward of 0.389753 units. Flags and technology researched/available indicators are Boolean, whereas power/production and compactness descriptors use different normalizations. Use `docs/OBSERVATIONS.md` for feature order and **audit the corresponding `_observation()` implementations** for exact scaling by group.
+$$
+r_{\mathrm{machine,raw}}
+=
+c_{\mathrm{production}}
+\sum_i w_i\,\Delta n_i^{\mathrm{machine}}
+$$
 
-## End-of-episode semantics
+where:
 
-The public configuration sets a 4096-step horizon. `truncated=True` on step 4096 is a time limit, not successful research or game completion. The source explicitly says there is no product/research terminal goal; `terminated=False` is normally expected.
+- \(c_{\mathrm{production}}\) is `production_reward_scale`, defaulting to 0.35.
+- \(w_i\) is the weight of item \(i\).
+- \(\Delta n_i^{\mathrm{machine}}\) is the credited machine-produced quantity after attribution corrections.
 
-## Scientific reporting and limitations
+The public contract maps `production_reward_scale` to the internal `automated_output_reward_scale` argument. Although the internal machine-layer constructor declares a default of 0.50, the public environment supplies 0.35.
 
-Provide an exact, source-reviewed expression for each final reward component, verify no duplicate credit between runtime layers, and include how weighted item production, scientific technology milestones, handcraft exclusion, action masks and simulated-time normalization affect policy incentives. Cite the exact source commit and release tag used for the experiment.
+### Simulated-time normalization
 
-## Reproducibility
+With `normalize_machine_reward_by_sim_time=True`, positive machine-production rewards are normalized as:
 
-Report the FLE-Gym commit/tag, upstream FLE version, scenario, reward overrides, horizon, policy/action-masking method, and the exact interpretation of `info["reward_parts"]`. The rc6 changes rename internal Python identifiers only; no reward redesign is intended. This should be checked with a live reward/telemetry comparison before publication.
+$$
+r_{\mathrm{machine}}
+=
+r_{\mathrm{machine,raw}}
+\frac{t_{\mathrm{ref}}}
+{\max(1.0,\Delta \mathrm{ticks}/60)}
+$$
+
+Here, \(t_{\mathrm{ref}}\) is `machine_reward_reference_seconds`, defaulting to 1.0 second. Elapsed time is measured from Factorio game ticks at 60 ticks per simulated second.
+
+The denominator has a minimum of one second. If tick measurements are unavailable, the environment uses a one-second fallback. Disabling normalization leaves the machine-production component unnormalized.
+
+For example, ten credited iron plates have a weighted output of \(10 \times 0.40 = 4.0\). With the default coefficient, their raw production reward is \(4.0 \times 0.35 = 1.4\). Over two simulated seconds, the normalized machine-production reward is 0.7.
+
+This example describes the machine-production component. Other rewards and penalties also contribute to the transition's total reward.
+
+## Research and factory progression
+
+Research and progression shaping covers technology triggers, laboratory activity, research progress and completion, ingredient readiness, power, infrastructure, and factory milestones.
+
+Research-progress rewards are normalized by elapsed simulated time and capped per transition. Completion and milestone tracking prevents repeated credit where the corresponding reward ledger applies.
+
+Laboratory-ingredient potential rewards depend on changes in ingredient availability. These contributions can be negative when ingredients are consumed.
+
+## Reward diagnostics
+
+The final component breakdown is available in `info["reward_parts"]`. Depending on the transition, it can include:
+
+| Component | Description |
+|---|---|
+| `machine_production` | Credited machine-output reward after attribution and time normalization |
+| `research_progress` | Research-progress contribution |
+| `research_completion` | Technology-completion contribution |
+| `research_activity` | Research-activity shaping |
+| `lab_ingredient_progress` | Change in laboratory-ingredient potential |
+| `science_readiness` | Science-readiness shaping |
+| `power_milestone` | Power milestone contribution |
+| `infrastructure` | Infrastructure shaping |
+| `logistics_milestone` | Logistics milestone contribution |
+| `progression_milestone` | Factory-progression milestone contribution |
+| `idle` | Idle-action contribution |
+| `repeated_idle_penalty` | Additional consecutive-idle penalty |
+| `step` | Per-step contribution |
+| `error` | Action-error contribution |
+| `invalid` | Invalid-action contribution |
+| `environment_rejection` | Environment-side rejection contribution |
+| `residual` | Difference between the returned reward and the named contributions at the aggregation stage |
+| `total` | Total recorded by the reward breakdown |
+
+Diagnostic keys can be added, replaced, or removed as internal layers assemble the final transition. Intermediate `automated_output` values may represent the same production contribution later reported as `machine_production`; they should not be added as separate rewards.
+
+Use the scalar `reward` returned by `env.step()` as the transition reward. Use the final `info["reward_parts"]` to inspect its contributions. A `residual` value is an accounting remainder, rather than a separate gameplay objective.
+
+Additional machine-production diagnostics include:
+
+- `machine_production_reward_raw`
+- `machine_production_reward_normalized`
+- `simulated_seconds_elapsed`
+- `lifetime_simulated_seconds`
+- `horizon_simulated_seconds`
+
+The elapsed-time diagnostic uses the same one-second floor and fallback as machine-production normalization.
+
+## Observation values and reward values
+
+Observation entries can contain transformed measurements. They should be interpreted according to their feature definitions.
+
+Several inventory and entity features use:
+
+```text
+min(10, log1p(max(0, count)))
+```
+
+For example, an inventory feature value of approximately `1.791759` corresponds to five items because `log1p(5)` is approximately `1.791759`.
+
+Several cumulative output features use:
+
+```text
+log1p(value) / 5
+```
+
+An observation named `machine_output_total` therefore does not directly represent a physical item count or the scalar production reward.
+
+Boolean flags, research indicators, power measurements, and factory descriptors use feature-specific representations. See [Observations](OBSERVATIONS.md) for the ordered observation schema.
+
+## Episode time limits
+
+The default horizon is 4,096 environment decisions. Reaching this limit returns `truncated=True`.
+
+Time-limit truncation does not indicate successful research or factory completion. The environment normally continues without a product or research terminal goal, with `terminated=False`.
+
+See [API](API.md) for the reset and step interfaces, and [Validation](VALIDATION.md) for recorded test coverage.

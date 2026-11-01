@@ -1,8 +1,8 @@
 # Observation vector and feature schema
 
-This document records the ordered labels from the validated rc5 `FactorioOpenPlayEnv.observation_schema` snapshot (18 October 2026). The rc6 rename is intended to preserve this order; confirm equivalence with the tests and runtime before release.
+This document lists the 266 ordered feature labels exposed by `FactorioOpenPlayEnv.observation_schema`.
 
-**Contract:** `Box` observation with 266 positions (0–265). These are schema labels, **not yet a complete scientific specification**: numerical transformations, units, bounds, clipping, scaling, and update frequency must be checked against the source before publication.
+**Contract:** `Box` observation with 266 positions (0–265). The table identifies feature order. Numerical transformations, units, clipping, scaling, and refresh intervals depend on the feature implementation.
 
 Do not interpret an observation entry as an unnormalized physical count without verifying its implementation.
 
