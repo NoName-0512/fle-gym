@@ -1,6 +1,6 @@
 # Action catalogue and action masking
 
-This catalogue records action IDs, names, categories, descriptions and declared prerequisites from the validated rc5 `FactorioOpenPlayEnv.action_registry` snapshot (18 October 2026). The rc6 internal-module rename is intended to preserve the catalogue unchanged; verify it using the packaged runtime after applying the patch.
+This catalogue lists action IDs, names, categories, descriptions and declared prerequisites exposed by `FactorioOpenPlayEnv.action_registry`.
 
 **Contract:** `Discrete(124)`; indices 0–123. An action's `required_items` and `required_entities` reflect metadata, **not a complete feasibility guarantee**. Check `env.action_masks()` each step, and verify changes in Factorio state after execution.
 

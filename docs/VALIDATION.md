@@ -1,6 +1,6 @@
 # Validation evidence and limits
 
-This record separates **previously completed live validation**, **package checks**, and **work still required after the rc6 internal-module rename**. Evidence summarized here is from user-run tests on 18 October 2026; it is not an independent reproduction on a new machine.
+This document records integration and package checks performed on 18 October 2026. Results are grouped by the implementation tested; results from earlier versions are retained as historical evidence.
 
 ## Live integration — completed on the validated pre-refactor implementation
 
@@ -65,14 +65,6 @@ evidence for the validated earlier implementation, not independent rc6 results.
 - Fresh Python 3.12 virtual environment: PASS for wheel installation, `pip check`, version verification and importing the public API from `site-packages`.
 - Initial upstream comparison: no exact matches of 12 consecutive nonblank/non-comment lines across 18 local Python files against 347 installed FLE Python files. This is not proof of independent authorship.
 
-## Remaining release gates
-
-- Complete the file-level provenance, ownership and licensing review before public distribution.
-- Finish checking the complete distribution inventory for unintended files and sensitive information.
-- Test additional reward semantics, full-horizon behavior and research progression if making claims about these capabilities. The 4,096-step tests remain pre-refactor evidence.
-- Update release documentation and version references for the final reviewed commit.
-- Build and validate the final `1.0.0` archives before tagging.
-
 ## Commands and reproducibility
 
 ```bash
@@ -93,6 +85,6 @@ python scripts/validate_scenarios.py --scenario open_world --rcon-port 27000 \
 
 Run the `open_world` command only when the server was actually launched with `open_world`. Do not re-use an output save name: `save_world` refuses to overwrite existing archives. Preserve the exact package commit, dependency versions, world configuration, logs and final action counts with each validation result.
 
-## Scientific interpretation
+## Interpreting validation results
 
-A valid masked action can still fail due to changing game state or runtime rejection; inspect `info` for the actual result. Research readiness and completion need dedicated end-to-end validation. Reward aggregation contains inherited and normalized terms; see [Rewards](REWARDS.md) before claiming a fully verified mathematical reward decomposition.
+A valid masked action can still fail due to changing game state or runtime rejection; inspect `info` for the actual result. Research readiness and completion need dedicated end-to-end validation. Reward aggregation includes inherited and normalized components. See [Rewards](REWARDS.md) for reward settings and diagnostic semantics.

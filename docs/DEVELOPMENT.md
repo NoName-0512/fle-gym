@@ -22,16 +22,11 @@ python -m build
 
 `world_saves/`, `runs/`, logs, build files and Python caches are ignored by Git. Keep credentials outside the repository and do not commit native saves or experimental checkpoints by default.
 
-## rc6 naming refactor
+## Internal modules
 
-The two legacy implementation identifiers were renamed without intentionally changing algorithms or game operations:
+Internal modules implement feasibility checks, factory extensions, machine-production accounting, crafting, and research behavior.
 
-| Old internal module/class | New module/class |
-|---|---|
-| `factorio_openended_env_research_ajweuzp.py` / `FactorioOpenEndedEnvAjweuzp` | `factorio_openended_env_feasibility.py` / `FactorioOpenEndedEnvFeasibility` |
-| `factorio_openended_env_research_yqeibtv.py` / `FactorioOpenEndedEnvYqeibtv` | `factorio_openended_env_extended.py` / `FactorioOpenEndedEnvExtended` |
-
-The legacy suffixes were also replaced in internal helper method names so that overrides and call sites continue to match. Configuration/logging labels containing those exact class names change accordingly. Internal imports must be updated *together*; deleting just the two files breaks the inheritance hierarchy. No migration is promised for third-party code that imported private modules or subclassed their private helpers.
+Imports, inherited methods, and their call sites must remain consistent when internal modules change. The supported integration points are the public environment classes and registry functions; private modules and helper methods may change between versions.
 
 ## Preserving model compatibility
 
