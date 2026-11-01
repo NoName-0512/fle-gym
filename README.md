@@ -4,8 +4,6 @@
 
 This release contains the **Gym-facing FLE/Factorio environment only**. It exposes a stable, discrete decision interface so researchers can connect their own reinforcement-learning or quality-diversity agents to an existing Factorio server. The package provides action masks, numeric observations, reward diagnostics, scenario-specific environment classes, and native Factorio save export. It does **not** bundle a trained agent, train PPO/SAC/MAP-Elites, or manage the Factorio cluster.
 
-**Release status:** `1.0.0` is being prepared for a private GitHub release following rc6 validation. The package passed offline regression checks, live Lab/Open Play integration, native save export, GitHub CI and clean installation. Full factory automation and rc6 iron-plate production have not been demonstrated. Public distribution remains on hold pending licensing and ownership confirmation; see [Validation](docs/VALIDATION.md).
-
 ## At a glance
 
 | Property | Current interface |
@@ -111,8 +109,8 @@ This uses Factorio's server save command, copies the ZIP from the selected Docke
 | [API](docs/API.md) | Environment constructors, resets, actions, metrics and save API |
 | [Scenarios](docs/SCENARIOS.md) | Lab Play vs Open Play and scenario ownership |
 | [Actions](docs/ACTIONS.md) | Ordered 124-action catalogue and action masking |
-| [Observations](docs/OBSERVATIONS.md) | Ordered 266-feature schema and normalization caveats |
-| [Rewards](docs/REWARDS.md) | Reward shaping, telemetry and interpretability limits |
+| [Observations](docs/OBSERVATIONS.md) | Ordered 266-feature schema and normalization |
+| [Rewards](docs/REWARDS.md) | Reward components, production weights and diagnostic semantics |
 | [Validation](docs/VALIDATION.md) | Tests completed, evidence and remaining test coverage |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common RCON, Docker, reset and packaging failures |
 | [Development](docs/DEVELOPMENT.md) | Contributor checks and internal compatibility rules |
@@ -123,7 +121,7 @@ This uses Factorio's server save command, copies the ZIP from the selected Docke
 
 The package intentionally excludes training loops, saved policies, five-replica scheduling, experiment dashboards, resumption/orchestration infrastructure, dissertation results and Factorio game files. High-level actions perform deterministic planning and game API operations, but **the policy decides which action to take**. The wrapper is not a vision-learning environment: its current agent observation is a 266-element numeric vector, not screenshots.
 
-For comparable research, report the package commit/tag, FLE/Factorio versions, server scenario, action catalogue, observation schema, reset/seed behavior, reward overrides, time limit, and agent action-masking method. The reward diagnostics should be interpreted with the cautions in [Rewards](docs/REWARDS.md).
+For comparable research, report the package commit/tag, FLE/Factorio versions, server scenario, action catalogue, observation schema, reset/seed behavior, reward overrides, time limit, and agent action-masking method. Reward settings and diagnostic semantics are documented in [Rewards](docs/REWARDS.md).
 
 ## License, upstream attribution and provenance
 
